@@ -92,6 +92,11 @@ router.get('/users/:userId(\\d+)/quizzes',
     sessionController.loginRequired,
     quizController.index);
 
+router.get('/quizzes/randomplay',                   quizController.randomPlay);
+router.get('/quizzes/randomcheck/:quizID(\\d+)',    quizController.randomCheck);
+
+
+
 
 // Routes for the resource /quizzes
 router.get('/quizzes',

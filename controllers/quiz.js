@@ -30,6 +30,7 @@ exports.load = (req, res, next, quizId) => {
 };
 
 
+
 // MW that allows actions only if the user logged in is admin or is the author of the quiz.
 exports.adminOrAuthorRequired = (req, res, next) => {
 
@@ -43,6 +44,7 @@ exports.adminOrAuthorRequired = (req, res, next) => {
         res.send(403);
     }
 };
+
 
 
 // GET /quizzes
@@ -229,4 +231,75 @@ exports.check = (req, res, next) => {
         result,
         answer
     });
+};
+
+exports.randomPlay= (req, res, next) => {
+
+    if (req.session.quizzes === undefined) {
+        req.session.score = 0;
+
+        models.quiz.findAll()
+        .then(quizzes => {
+            req.session.quizzes = quizzes;
+            req.session.index = Math.floor(Math.random()*req.session.quizzes.length);
+            res.render('quizzes/random_play', {
+                score: req.session.score,
+                quiz: req.session.quizzes[req.session.index]
+            })
+        })
+    } else {
+        req.session.index = Math.floor(Math.random()*req.session.quizzes.length);
+        res.render('quizzes/random_play', {
+            score: req.session.score,
+            quiz: req.session.quizzes[req.session.index]
+        });
+    }
+};
+
+exports.randomCheck = (req, res, next) => {
+
+    let correct = false;
+    let resetear=0
+    
+
+    if ((req.query.answer) === (req.session.quizzes[req.session.index].answer)) {
+        correct = true;
+        req.session.score++;
+        req.session.quizzes.splice(req.session.index, 1);
+        if(req.session.quizzes.length === 0){
+            let score = req.session.score
+            req.session.score = 0;
+            models.quiz.findAll()
+            .then(quizzes => {
+                req.session.quizzes = quizzes;
+            })
+            .then(() => {
+                res.render('quizzes/random_nomore', {
+                    score: score
+
+                });
+            });
+
+        } else {
+            res.render('quizzes/random_result', {
+                score: req.session.score,
+                answer: req.query.answer,
+                result: correct
+            });
+        }
+    } else {
+        let score = req.session.score;
+        req.session.score = 0;
+        models.quiz.findAll()
+        .then(quizzes => {
+            req.session.quizzes = quizzes;
+        })
+        .then(() => {
+            res.render('quizzes/random_result', {
+                score: score,
+                answer: req.query.answer,
+                result: correct
+            });
+        });
+    }
 };
